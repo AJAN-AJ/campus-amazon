@@ -1,6 +1,6 @@
 // src/types/market.ts
 
-export type Category = 'Food' | 'Stationery' | 'Electronics' | 'Fashion' | 'Groceries' | 'Services';
+export type Category = 'Food' | 'Stationery' | 'Electronics' | 'Fashion' | 'Groceries' |'Books'| 'Services' | 'All';
 
 export interface Vendor {
   id: string;
@@ -11,6 +11,7 @@ export interface Vendor {
   offersFreeDelivery: boolean; // True = Shop delivers. False = Campus-Amazon delivers.
   whatsAppNumber: string;
   imageUrl?: string;
+  password?: string;
 }
 
 export interface Product {

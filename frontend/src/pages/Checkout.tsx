@@ -1,7 +1,7 @@
 // src/pages/Checkout.tsx
-import React, { useState } from 'react';
-import { MOCK_LANDMARKS } from '../types/mockData';
-import { ArrowLeft, MapPin, Clipboard, CheckCircle, Smartphone } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { apiService } from '../services/api';
+import { ArrowLeft, MapPin, Clipboard, Smartphone, Loader2 } from 'lucide-react';
 import type { Product, CampusLandmark } from '../types/market';
 
 interface CheckoutProps {
@@ -16,14 +16,34 @@ interface CheckoutProps {
 }
 
 export default function Checkout({ cart, onBack, onPlaceOrder, vendorName }: CheckoutProps) {
-  const [selectedLandmarkId, setSelectedLandmarkId] = useState(MOCK_LANDMARKS[0]?.id || '');
+  const [landmarks, setLandmarks] = useState<CampusLandmark[]>([]);
+  const [selectedLandmarkId, setSelectedLandmarkId] = useState('');
   const [deliveryNotes, setDeliveryNotes] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loadingLandmarks, setLoadingLandmarks] = useState(true);
 
-  // Compute pricing
+  // Fetch real landmarks from API on page load
+  useEffect(() => {
+    async function loadLandmarks() {
+      try {
+        setLoadingLandmarks(true);
+        const data = await apiService.getLandmarks();
+        setLandmarks(data);
+        if (data.length > 0) {
+          setSelectedLandmarkId(data[0].id);
+        }
+      } catch (err) {
+        console.error("Failed to load landmarks:", err);
+      } finally {
+        setLoadingLandmarks(false);
+      }
+    }
+    loadLandmarks();
+  }, []);
+
   const subtotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-  const deliveryFee = 800; // Flat 800 MWK rate for your deliveries
+  const deliveryFee = 800;
   const total = subtotal + deliveryFee;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -34,16 +54,11 @@ export default function Checkout({ cart, onBack, onPlaceOrder, vendorName }: Che
     }
 
     setIsSubmitting(true);
-
-    // Simulate placing order
-    setTimeout(() => {
-      onPlaceOrder({
-        landmarkId: selectedLandmarkId,
-        deliveryNotes,
-        customerPhone
-      });
-      setIsSubmitting(false);
-    }, 1200);
+    onPlaceOrder({
+      landmarkId: selectedLandmarkId,
+      deliveryNotes,
+      customerPhone
+    });
   };
 
   return (
@@ -83,7 +98,6 @@ export default function Checkout({ cart, onBack, onPlaceOrder, vendorName }: Che
             ))}
           </div>
 
-          {/* Pricing Calculations */}
           <div className="mt-6 pt-4 border-t border-gray-100 space-y-2 text-sm">
             <div className="flex justify-between text-gray-500">
               <span>Subtotal</span>
@@ -112,17 +126,25 @@ export default function Checkout({ cart, onBack, onPlaceOrder, vendorName }: Che
               </label>
               <div className="relative">
                 <MapPin className="absolute left-3.5 top-3.5 text-orange-500" size={16} />
-                <select
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border-none focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all text-sm shadow-inner cursor-pointer"
-                  value={selectedLandmarkId}
-                  onChange={(e) => setSelectedLandmarkId(e.target.value)}
-                >
-                  {MOCK_LANDMARKS.map((landmark) => (
-                    <option key={landmark.id} value={landmark.id}>
-                      {landmark.name}
-                    </option>
-                  ))}
-                </select>
+                
+                {loadingLandmarks ? (
+                  <div className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 text-xs text-gray-400 flex items-center space-x-2">
+                    <Loader2 className="animate-spin" size={14} />
+                    <span>Loading active landmarks...</span>
+                  </div>
+                ) : (
+                  <select
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border-none focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all text-sm shadow-inner cursor-pointer"
+                    value={selectedLandmarkId}
+                    onChange={(e) => setSelectedLandmarkId(e.target.value)}
+                  >
+                    {landmarks.map((landmark) => (
+                      <option key={landmark.id} value={landmark.id}>
+                        {landmark.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
             </div>
 
