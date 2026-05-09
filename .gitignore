@@ -1,0 +1,16 @@
+# --- Python / Flask ---
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+backend/database.db      # Prevent committing your local SQLite database
+backend/.env             # Protects secret keys
+
+# --- React / Node ---
+frontend/node_modules/
+frontend/dist/           # Production build folder
+frontend/.env.local      # Local environment variables
+
+# --- OS / IDE Specific ---
+.DS_Store
+.vscode/
+.idea/
