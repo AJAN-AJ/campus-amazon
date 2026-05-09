@@ -2,17 +2,18 @@
 import React, { useState } from 'react';
 import Home from './pages/Home';
 import Shop from './pages/Shop';
-import Register from './pages/Register'; // Import the new register page
-import { MOCK_VENDORS } from './types/mockData'; // Import mock vendors array to let us add to it
+import Register from './pages/Register';
+import Checkout from './pages/Checkout'; // Import the checkout page
+import { MOCK_VENDORS } from './types/mockData';
 import { ShoppingCart } from 'lucide-react';
 import type { Product, Vendor } from './types/market';
 
-type ActivePage = 'home' | 'shop' | 'register';
+type ActivePage = 'home' | 'shop' | 'register' | 'checkout';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<ActivePage>('home');
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
-  const [vendorsList, setVendorsList] = useState<Vendor[]>(MOCK_VENDORS); // Turn vendors list into reactive state
+  const [vendorsList, setVendorsList] = useState<Vendor[]>(MOCK_VENDORS);
   const [cart, setCart] = useState<{ product: Product; quantity: number }[]>([]);
 
   const handleSelectVendor = (vendorId: string) => {
@@ -29,17 +30,22 @@ function App() {
     setCurrentPage('register');
   };
 
+  const handleOpenCheckout = () => {
+    if (cart.length === 0) {
+      alert("Your cart is empty!");
+      return;
+    }
+    setCurrentPage('checkout');
+  };
+
   const handleRegisterSuccess = (newVendorData: Omit<Vendor, 'id' | 'isOpen'>) => {
     const newVendor: Vendor = {
       ...newVendorData,
-      id: `v${vendorsList.length + 1}`, // Generate dynamic new id
-      isOpen: true, // New vendors are online by default!
+      id: `v${vendorsList.length + 1}`,
+      isOpen: true,
     };
-
-    // Update state to append the new vendor instantly
     setVendorsList((prev) => [newVendor, ...prev]);
-    
-    alert(`Success! "${newVendor.name}" has been registered. You'll see it live on the homepage dashboard.`);
+    alert(`Success! "${newVendor.name}" has been registered.`);
     handleBackToHome();
   };
 
@@ -64,7 +70,22 @@ function App() {
     });
   };
 
+  const handlePlaceOrder = (orderData: { landmarkId: string; deliveryNotes: string; customerPhone: string }) => {
+    console.log("Order submitted:", { cart, ...orderData });
+    
+    alert(`Order Placed Successfully!\n\nYour items will be processed. Arthur has been assigned as the runner. Keep your phone (${orderData.customerPhone}) close!`);
+    
+    // Clear the cart on successful checkout
+    setCart([]);
+    handleBackToHome();
+  };
+
   const totalCartItems = cart.reduce((total, item) => total + item.quantity, 0);
+
+  // Get active vendor name for checkout header
+  const activeVendorName = selectedVendorId 
+    ? vendorsList.find(v => v.id === selectedVendorId)?.name || '' 
+    : '';
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -79,10 +100,19 @@ function App() {
           </h1>
 
           <div className="flex items-center space-x-4">
-            <button className="relative p-2.5 text-gray-300 hover:text-white transition-all bg-gray-800 rounded-xl hover:bg-gray-700">
+            {/* Clickable Cart Indicator to trigger checkout */}
+            <button 
+              onClick={handleOpenCheckout}
+              disabled={cart.length === 0}
+              className={`relative p-2.5 transition-all rounded-xl border ${
+                cart.length > 0 
+                  ? 'text-white bg-orange-500 border-orange-500 cursor-pointer hover:bg-orange-600' 
+                  : 'text-gray-400 bg-gray-800 border-gray-800 cursor-not-allowed'
+              }`}
+            >
               <ShoppingCart size={18} />
               {totalCartItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border border-gray-900 animate-pulse">
+                <span className="absolute -top-1 -right-1 bg-white text-orange-600 text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border border-orange-500 animate-pulse">
                   {totalCartItems}
                 </span>
               )}
@@ -96,7 +126,7 @@ function App() {
         <Home 
           onSelectVendor={handleSelectVendor} 
           onOpenRegister={handleOpenRegister} 
-          vendors={vendorsList} // Pass the dynamic list state instead of static mock file
+          vendors={vendorsList}
         />
       )}
 
@@ -106,7 +136,7 @@ function App() {
           onBack={handleBackToHome}
           onAddToCart={handleAddToCart}
           cartCount={totalCartItems}
-          vendors={vendorsList} // Pass state-driven vendors list to check updates
+          vendors={vendorsList}
         />
       )}
 
@@ -114,6 +144,15 @@ function App() {
         <Register 
           onBack={handleBackToHome}
           onRegisterSuccess={handleRegisterSuccess}
+        />
+      )}
+
+      {currentPage === 'checkout' && (
+        <Checkout 
+          cart={cart}
+          vendorName={activeVendorName}
+          onBack={() => setCurrentPage('shop')}
+          onPlaceOrder={handlePlaceOrder}
         />
       )}
     </div>
