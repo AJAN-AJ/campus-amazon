@@ -9,11 +9,12 @@ interface ShopProps {
   onBack: () => void;
   onAddToCart: (product: Product) => void;
   cartCount: number;
+  vendors: Vendor[];
 }
 
-export default function Shop({ vendorId, onBack, onAddToCart, cartCount }: ShopProps) {
+export default function Shop({ vendorId, onBack, onAddToCart, cartCount, vendors}: ShopProps) {
   // Find the selected vendor
-  const vendor = MOCK_VENDORS.find(v => v.id === vendorId);
+  const vendor = vendors.find(v => v.id === vendorId);
   
   // Find products belonging to this vendor
   const products = MOCK_PRODUCTS.filter(p => p.vendorId === vendorId);

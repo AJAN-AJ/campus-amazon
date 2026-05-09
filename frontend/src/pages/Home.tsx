@@ -28,14 +28,15 @@ const CATEGORIES: { name: Category | 'All'; icon: React.ReactNode }[] = [
 interface HomeProps {
   onSelectVendor: (vendorId: string) => void;
   onOpenRegister: () => void;
+  vendors: Vendor[]
 }
 
-export default function Home({ onSelectVendor, onOpenRegister }: HomeProps) {
+export default function Home({ onSelectVendor, onOpenRegister, vendors }: HomeProps) {
   const [selectedCategory, setSelectedCategory] = useState<Category | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Filter logic
-  const filteredVendors = MOCK_VENDORS.filter(vendor => {
+  const filteredVendors = vendors.filter(vendor => {
     const matchesCategory = selectedCategory === 'All' || vendor.category === selectedCategory;
     const matchesSearch = 
       vendor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

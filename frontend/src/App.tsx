@@ -2,19 +2,19 @@
 import React, { useState } from 'react';
 import Home from './pages/Home';
 import Shop from './pages/Shop';
-import { ShoppingBag, ShoppingCart } from 'lucide-react';
-import type { Product } from './types/market';
+import Register from './pages/Register'; // Import the new register page
+import { MOCK_VENDORS } from './types/mockData'; // Import mock vendors array to let us add to it
+import { ShoppingCart } from 'lucide-react';
+import type { Product, Vendor } from './types/market';
 
 type ActivePage = 'home' | 'shop' | 'register';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<ActivePage>('home');
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
-  
-  // State for shopping cart items (Storing Product objects & quantity)
+  const [vendorsList, setVendorsList] = useState<Vendor[]>(MOCK_VENDORS); // Turn vendors list into reactive state
   const [cart, setCart] = useState<{ product: Product; quantity: number }[]>([]);
 
-  // Navigation handlers
   const handleSelectVendor = (vendorId: string) => {
     setSelectedVendorId(vendorId);
     setCurrentPage('shop');
@@ -27,24 +27,32 @@ function App() {
 
   const handleOpenRegister = () => {
     setCurrentPage('register');
-    alert("Awesome! Register page is next up on our list.");
   };
 
-  // Add to cart with single-vendor restriction rule
+  const handleRegisterSuccess = (newVendorData: Omit<Vendor, 'id' | 'isOpen'>) => {
+    const newVendor: Vendor = {
+      ...newVendorData,
+      id: `v${vendorsList.length + 1}`, // Generate dynamic new id
+      isOpen: true, // New vendors are online by default!
+    };
+
+    // Update state to append the new vendor instantly
+    setVendorsList((prev) => [newVendor, ...prev]);
+    
+    alert(`Success! "${newVendor.name}" has been registered. You'll see it live on the homepage dashboard.`);
+    handleBackToHome();
+  };
+
   const handleAddToCart = (product: Product) => {
     setCart((prevCart) => {
-      // Check if cart already has items from a different vendor
       if (prevCart.length > 0 && prevCart[0].product.vendorId !== product.vendorId) {
         const confirmClear = window.confirm(
           "Your cart contains items from a different shop. Would you like to clear your cart to order from this vendor?"
         );
-        if (confirmClear) {
-          return [{ product, quantity: 1 }];
-        }
+        if (confirmClear) return [{ product, quantity: 1 }];
         return prevCart;
       }
 
-      // If item is already in the cart, increase its quantity
       const existingItemIndex = prevCart.findIndex(item => item.product.id === product.id);
       if (existingItemIndex > -1) {
         const newCart = [...prevCart];
@@ -52,12 +60,10 @@ function App() {
         return newCart;
       }
 
-      // Otherwise, add new item
       return [...prevCart, { product, quantity: 1 }];
     });
   };
 
-  // Compute total quantity of items in cart
   const totalCartItems = cart.reduce((total, item) => total + item.quantity, 0);
 
   return (
@@ -73,7 +79,6 @@ function App() {
           </h1>
 
           <div className="flex items-center space-x-4">
-            {/* Dynamic Cart Indicator */}
             <button className="relative p-2.5 text-gray-300 hover:text-white transition-all bg-gray-800 rounded-xl hover:bg-gray-700">
               <ShoppingCart size={18} />
               {totalCartItems > 0 && (
@@ -91,6 +96,7 @@ function App() {
         <Home 
           onSelectVendor={handleSelectVendor} 
           onOpenRegister={handleOpenRegister} 
+          vendors={vendorsList} // Pass the dynamic list state instead of static mock file
         />
       )}
 
@@ -100,6 +106,14 @@ function App() {
           onBack={handleBackToHome}
           onAddToCart={handleAddToCart}
           cartCount={totalCartItems}
+          vendors={vendorsList} // Pass state-driven vendors list to check updates
+        />
+      )}
+
+      {currentPage === 'register' && (
+        <Register 
+          onBack={handleBackToHome}
+          onRegisterSuccess={handleRegisterSuccess}
         />
       )}
     </div>
