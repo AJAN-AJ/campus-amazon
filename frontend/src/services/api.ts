@@ -1,8 +1,8 @@
 // src/services/api.ts
 import type { Vendor, Product, CampusLandmark } from '../types/market';
 
-const API_BASE_URL = 'http://127.0.0.1:5000/api';
-
+// src/services/api.ts
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL|| 'https://campus-amazon.onrender.com/api' //|| 'http://127.0.0.1:5000/api';
 export const apiService = {
   // 1. Fetch all active vendors from the SQLite DB
   async getVendors(): Promise<Vendor[]> {
